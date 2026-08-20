@@ -125,14 +125,14 @@ const STRINGS = {
     toastUpdated: "Your profile has been updated successfully!",
     toastDeleted: "Your profile has been permanently deleted",
     toastFailSubmit: "Failed to submit, try again", toastFailConnect: "Could not connect to server",
-   adminTitle: "Review Panel", adminNoPending: "No pending requests",
+    adminTitle: "Review Panel", adminNoPending: "No pending requests",
     pendingLabel: "Pending review", approveBtn: "Approve & publish", rejectBtn: "Reject", all: "All",
     rateThis: "Rate this craftsman", thanksRating: "Thanks for your rating & review!", shareBtn: "Share", shareCopied: "Link copied",
     completeRegistrationBanner: "You registered previously without an email. Click here to complete your registration!",
     completeRegTitle: "Complete Registration & Verify Email",
     reviewsTitle: "Reviews & Comments", addReviewBtn: "Add rating & comment", reviewerName: "Your name", reviewComment: "Write your review about this craftsman...", sendReview: "Submit Review",
     verifyEmailBadge: "Email Verify Required",
-  emailNoticeText: "Note for craftsman: Please add and verify your email to manage or edit your profile in the future."
+    emailNoticeText: "Note for craftsman: Please add and verify your email to manage or edit your profile in the future."
   },
 };
 
@@ -155,7 +155,7 @@ const fromDb = (r) => ({
   reviews: r.reviews, galleryUrls: r.gallery_urls || [], reviewList: r.review_list || []
 });
 
-function CraftCard({ c, cat, lang, t, onClick, onPromptEmail }) {
+function CraftCard({ c, cat, lang, t, onClick }) {
   return (
     <div onClick={onClick} className="bg-white rounded-2xl p-4 shadow-sm border border-[#DCD5C4] cursor-pointer hover:shadow-md transition">
       <div className="flex items-start justify-between gap-3">
@@ -191,9 +191,13 @@ function App() {
   const [toast, setToast] = useState(null);
   const [saving, setSaving] = useState(false);
   const [uploadingText, setUploadingText] = useState("");
+  
+  // نماذج التسجيل والتعديل
+  const [form, setForm] = useState({ name: "", email: "", cat: "plumb", otherCat: "", hood: NEIGHBORHOODS[0].ar, exp: "1", phone: "", bio: "", galleryUrls: [] });
   const [editingCraftsman, setEditingCraftsman] = useState(null);
   const [completingCraftsman, setCompletingCraftsman] = useState(null);
 
+  // التقييمات والآراء
   const [newRatingVal, setNewRatingVal] = useState(5);
   const [newReviewerName, setNewReviewerName] = useState("");
   const [newCommentText, setNewCommentText] = useState("");
@@ -225,6 +229,11 @@ function App() {
   useEffect(() => { setActiveHood(t.all); }, [lang]);
   useEffect(() => { document.documentElement.setAttribute("dir", dir); document.documentElement.setAttribute("lang", lang); }, [dir, lang]);
 
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3500);
+  };
+
   const fetchList = async () => {
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/craftsmen?select=*`, { headers: SB_HEADERS });
@@ -253,6 +262,33 @@ function App() {
       return matchCat && matchHood && matchQuery;
     }).sort((a, b) => (b.rating || 0) - (a.rating || 0));
   }, [approved, query, activeCat, activeHood, lang, t]);
+
+  const handleRegisterSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.name || !form.email || !form.phone || !form.bio) {
+      showToast(t.requiredError);
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/craftsmen`, {
+        method: "POST",
+        headers: { ...SB_HEADERS, "Prefer": "return=representation" },
+        body: JSON.stringify(toDb(form))
+      });
+      if (res.ok) {
+        showToast(t.toastSubmitted);
+        setForm({ name: "", email: "", cat: "plumb", otherCat: "", hood: NEIGHBORHOODS[0].ar, exp: "1", phone: "", bio: "", galleryUrls: [] });
+        changeView("home");
+        fetchList();
+      } else {
+        showToast(t.toastFailSubmit);
+      }
+    } catch (err) {
+      showToast(t.toastFailConnect);
+    }
+    setSaving(false);
+  };
 
   return (
     <div style={{ minHeight: "100vh" }} dir={dir}>
@@ -373,14 +409,7 @@ function App() {
                   <p className="text-center text-xs text-stone-400 py-6">{t.noCraftsmenYet}</p>
                 ) : (
                   [...approved].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 3).map((c) => (
-                    <CraftCard 
-                      key={c.id} 
-                      c={c} 
-                      cat={catInfo(c.cat)} 
-                      lang={lang} 
-                      t={t} 
-                      onClick={() => setSelected(c)} 
-                    />
+                    <CraftCard key={c.id} c={c} cat={catInfo(c.cat)} lang={lang} t={t} onClick={() => setSelected(c)} />
                   ))
                 )}
               </div>
@@ -403,9 +432,85 @@ function App() {
               </div>
             </main>
           )}
+
+          {view === "register" && (
+            <main className="px-4 pb-24 pt-4">
+              <div className="flex items-center gap-2 mb-4">
+                <button onClick={() => changeView("home")} className="text-[#0E3D37] font-bold text-lg">{dir === "rtl" ? "➔" : "⬅"}</button>
+                <h2 className="font-black text-[#0E3D37] text-base">{t.registerTitle}</h2>
+              </div>
+              <form onSubmit={handleRegisterSubmit} className="bg-white rounded-2xl p-4 shadow-sm border border-[#DCD5C4] space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#0E3D37] mb-1">{t.fullName}</label>
+                  <input className="ipt" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#0E3D37] mb-1">{t.email}</label>
+                  <input className="ipt" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#0E3D37] mb-1">{t.craft}</label>
+                  <select className="ipt" value={form.cat} onChange={(e) => setForm({ ...form, cat: e.target.value })}>
+                    {CATEGORIES.map((c) => (<option key={c.id} value={c.id}>{c.name[lang]}</option>))}
+                  </select>
+                </div>
+                {form.cat === "other" && (
+                  <div>
+                    <label className="block text-xs font-bold text-[#0E3D37] mb-1">{t.otherCraft}</label>
+                    <input className="ipt" value={form.otherCat} onChange={(e) => setForm({ ...form, otherCat: e.target.value })} required />
+                  </div>
+                )}
+                <div>
+                  <label className="block text-xs font-bold text-[#0E3D37] mb-1">{t.neighborhood}</label>
+                  <select className="ipt" value={form.hood} onChange={(e) => setForm({ ...form, hood: e.target.value })}>
+                    {NEIGHBORHOODS.map((h) => (<option key={h.ar} value={h.ar}>{h[lang]}</option>))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#0E3D37] mb-1">{t.phone}</label>
+                  <input className="ipt" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#0E3D37] mb-1">{t.bio}</label>
+                  <textarea className="ipt" rows="3" value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} required></textarea>
+                </div>
+                <button type="submit" disabled={saving} className="w-full py-3 rounded-xl font-black text-white text-xs" style={{ background: "#0E3D37" }}>
+                  {saving ? t.submitting : t.submitBtn}
+                </button>
+              </form>
+            </main>
+          )}
+
+          {view === "edit_auth" && (
+            <main className="px-4 pb-24 pt-4">
+              <div className="flex items-center gap-2 mb-4">
+                <button onClick={() => changeView("home")} className="text-[#0E3D37] font-bold text-lg">{dir === "rtl" ? "➔" : "⬅"}</button>
+                <h2 className="font-black text-[#0E3D37] text-base">{t.editProfileCta}</h2>
+              </div>
+              <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#DCD5C4]">
+                <p className="text-xs text-stone-600 mb-4">{t.emailNoticeText}</p>
+              </div>
+            </main>
+          )}
         </>
       )}
-      
+
+      {/* شريط التنقل السفلي */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#DCD5C4] px-4 py-2 flex justify-around items-center z-30 shadow-lg">
+        <button onClick={() => { changeView("home"); setActiveCat(null); setQuery(""); }} className={`flex flex-col items-center text-xs font-bold ${view === "home" ? "text-[#0E3D37]" : "text-stone-400"}`}>
+          <i className="fa-solid fa-house text-lg mb-0.5"></i>
+          <span>{t.navHome}</span>
+        </button>
+        <button onClick={() => changeView("list")} className={`flex flex-col items-center text-xs font-bold ${view === "list" ? "text-[#0E3D37]" : "text-stone-400"}`}>
+          <i className="fa-solid fa-magnifying-glass text-lg mb-0.5"></i>
+          <span>{t.navSearch}</span>
+        </button>
+        <button onClick={() => changeView("register")} className={`flex flex-col items-center text-xs font-bold ${view === "register" ? "text-[#0E3D37]" : "text-stone-400"}`}>
+          <i className="fa-solid fa-user-plus text-lg mb-0.5"></i>
+          <span>{t.navRegister}</span>
+        </button>
+      </nav>
+
       {toast && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-[#0E3D37] text-white px-4 py-2.5 rounded-2xl shadow-lg text-xs font-bold z-50">
           {toast}
