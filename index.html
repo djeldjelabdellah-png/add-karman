@@ -277,10 +277,11 @@ function App() {
 
     try {
       await emailjs.send("service_e9u62f9", "template_4s83w0k", {
-        to_email: form.email,
-        to_name: form.name,
-        otp_code: code,
-      });
+  to_email: form.email,
+  to_name: form.name,
+  otp_code: code,
+ "1YVvuqYAcvu8EWWaS");
+       },
       setSaving(false);
       changeView("verify");
     } catch (err) {
