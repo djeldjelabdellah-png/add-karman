@@ -285,6 +285,7 @@ function App() {
       changeView("verify");
     } catch (err) {
       setSaving(false);
+      alert("خطأ: " + JSON.stringify(err));
       showToast(t.toastFailSubmit);
     }
   };
