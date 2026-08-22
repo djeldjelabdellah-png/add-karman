@@ -1,3 +1,6 @@
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://qecmpqtzfhovalfndarr.supabase.co'; // الرابط الظاهر في سجلاتك
+      const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlY21wcXR6ZmhvdmFsZm5kYXJyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NzIyOTE4MywiZXhwIjoyMTAyODA1MTgzfQ.jSLaG5b5vuL6ntTWTaXov3Oysha1OfowmrRVe9Q78-I'; 
+      const TELEGRAM_TOKEN = '8610113650:AAGk36aIJM3WdlpZSMM2R5HFLg9MrlQ3-MQ'; // التוكن الظاهر في محادثاتك السابقة
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
