@@ -19,17 +19,13 @@ module.exports = async function handler(req, res) {
         'Content-Type': 'application/json',
       };
 
-      if (action === 'approve') {
-        await fetch(`${SUPABASE_URL}/rest/v1/craftsmen?id=eq.${id}`, {
+     if (action === 'approve') {
+        const updateRes = await fetch(`${SUPABASE_URL}/rest/v1/craftsmen?id=eq.${id}`, {
           method: 'PATCH',
           headers: SB_HEADERS,
           body: JSON.stringify({ status: 'approved' }),
         });
-      } else if (action === 'reject') {
-        await fetch(`${SUPABASE_URL}/rest/v1/craftsmen?id=eq.${id}`, {
-          method: 'DELETE',
-          headers: SB_HEADERS,
-        });
+        console.log('Supabase update status:', updateRes.status);
       }
 
       const TELEGRAM_TOKEN = '8610113650:AAGk36aIJM3WdlpZSMM2R5HFLg9MrlQ3-MQ';
