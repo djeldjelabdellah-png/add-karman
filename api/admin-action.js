@@ -25,7 +25,9 @@ module.exports = async function handler(req, res) {
           headers: SB_HEADERS,
           body: JSON.stringify({ status: 'approved' }),
         });
-        console.log('Supabase update status:', updateRes.status);
+        
+        const responseText = await updateRes.text();
+        console.log('Supabase error response:', responseText);
       }
 
       const TELEGRAM_TOKEN = '8610113650:AAGk36aIJM3WdlpZSMM2R5HFLg9MrlQ3-MQ';
