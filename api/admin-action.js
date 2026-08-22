@@ -15,7 +15,7 @@ export default async function handler(req, res) {
       const [action, id] = callbackData.split('_');
 
       const SUPABASE_URL = process.env.SUPABASE_URL || 'https://qecmpqtzfhovalfndarr.supabase.co';
-      const SERVICE_ROLE_KEY = 'ضع_مفتاح_service_role_هنا'; 
+      const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlY21wcXR6ZmhvdmFsZm5kYXJyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NzIyOTE4MywiZXhwIjoyMTAyODA1MTgzfQ.jSLaG5b5vuL6ntTWTaXov3Oysha1OfowmrRVe9Q78-I'; 
       const SB_HEADERS = {
         apikey: SERVICE_ROLE_KEY,
         Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
