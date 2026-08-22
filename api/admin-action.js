@@ -19,15 +19,15 @@ module.exports = async function handler(req, res) {
         'Content-Type': 'application/json',
       };
 
-     if (action === 'approve') {
+   if (action === 'approve') {
         const updateRes = await fetch(`${SUPABASE_URL}/rest/v1/craftsmen?id=eq.${id}`, {
           method: 'PATCH',
           headers: SB_HEADERS,
           body: JSON.stringify({ status: 'approved' }),
         });
         
-        const responseText = await updateRes.text();
-        console.log('Supabase error response:', responseText);
+        const errorText = await updateRes.text();
+        console.log('SUPABASE FULL ERROR TEXT:', errorText);
       }
 
       const TELEGRAM_TOKEN = '8610113650:AAGk36aIJM3WdlpZSMM2R5HFLg9MrlQ3-MQ';
