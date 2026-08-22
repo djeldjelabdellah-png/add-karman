@@ -47,7 +47,7 @@ module.exports = async function handler(req, res) {
 
     return res.status(400).json({ error: 'Invalid request body' });
   } catch (err) {
-    console.error('Admin action error:', err);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error('CRITICAL ERROR DETAILS:', err.message);
+    return res.status(500).json({ error: err.message });
   }
 };
