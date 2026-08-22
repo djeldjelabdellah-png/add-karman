@@ -6,11 +6,12 @@ export default async function handler(req, res) {
   try {
     const update = req.body;
     
-    // التحقق مما إذا كان الطلب قادماً من ضغطة زر تفاعلي في تليجرام (Callback Query)
     if (update.callback_query) {
       const callbackQuery = update.callback_query;
-      const data = JSON.parse(callbackQuery.data);
-      const { action, id } = data; // action: 'approve' أو 'reject', id: معرف الحرفي
+      const callbackData = callbackQuery.data; // مثل: "approve_7" أو "reject_7"
+      
+      // فصل الإجراء عن معرف الحرفي بناءً على الشرطة السفلى _
+      const [action, id] = callbackData.split('_');
 
       const SUPABASE_URL = process.env.SUPABASE_URL;
       const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
