@@ -5,32 +5,31 @@ module.exports = async function handler(req, res) {
 
   try {
     const update = req.body;
+    console.log('Incoming body:', JSON.stringify(update));
     
     if (update.callback_query) {
       const callbackQuery = update.callback_query;
-      const callbackData = callbackQuery.data; 
+      const callbackData = callbackQuery.data; // مثال: "approve_10" أو "reject_10"
       const [action, id] = callbackData.split('_');
 
-      const SUPABASE_URL = process.env.SUPABASE_URL || 'https://qecmpqtzfhovalfndarr.supabase.co';
-      const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlY21wcXR6ZmhvdmFsZm5kYXJyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NzIyOTE4MywiZXhwIjoyMTAyODA1MTgzfQ.jSLaG5b5vuL6ntTWTaXov3Oysha1OfowmrRVe9Q78-I'; 
-    const SB_HEADERS = {
-        apikey: SERVICE_ROLE_KEY,
-        Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal',
-      };
+      const SERVICE_ROLE_KEY = 'ضع_مفتاح_service_role_هنا'; 
+      const EDGE_FUNCTION_URL = 'https://qecmpqtzfhovalfndarr.supabase.co/functions/v1/clever-responder';
 
-   if (action === 'approve') {
-        const updateRes = await fetch(`${SUPABASE_URL}/rest/v1/craftsmen?id=eq.${id}`, {
-          method: 'PATCH',
-          headers: SB_HEADERS,
-          body: JSON.stringify({ status: 'approved' }),
-        });
-        
-        const errorText = await updateRes.text();
-        console.log('SUPABASE FULL ERROR TEXT:', errorText);
-      }
+      // إرسال الطلب إلى Supabase Edge Function
+      const updateRes = await fetch(EDGE_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: action, id: id }),
+      });
+      
+      const responseText = await updateRes.text();
+      console.log('Edge Function Response Status:', updateRes.status);
+      console.log('Edge Function Response Text:', responseText);
 
+      // الرد على تليجرام لإنهاء علامة التحميل على الزر
       const TELEGRAM_TOKEN = '8610113650:AAGk36aIJM3WdlpZSMM2R5HFLg9MrlQ3-MQ';
       await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/answerCallbackQuery`, {
         method: 'POST',
