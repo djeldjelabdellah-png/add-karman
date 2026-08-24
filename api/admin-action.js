@@ -12,7 +12,7 @@ module.exports = async function handler(req, res) {
       const callbackData = callbackQuery.data; // مثال: "approve_10" أو "reject_10"
       const [action, id] = callbackData.split('_');
 
-      const SERVICE_ROLE_KEY = 'ضع_مفتاح_service_role_هنا'; 
+      const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
       const EDGE_FUNCTION_URL = 'https://qecmpqtzfhovalfndarr.supabase.co/functions/v1/clever-responder';
 
       // إرسال الطلب إلى Supabase Edge Function
@@ -29,18 +29,32 @@ module.exports = async function handler(req, res) {
       console.log('Edge Function Response Status:', updateRes.status);
       console.log('Edge Function Response Text:', responseText);
 
-      // الرد على تليجرام لإنهاء علامة التحميل على الزر
-      const TELEGRAM_TOKEN = '8922304399:AAE1wmvK8aBS7e20DAmzmj0fUyQ8zBiozMs';
+      const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
+      const successText = action === 'approve' ? 'تم قبول الحرفي بنجاح!' : 'تم رفض الحرفي وحذفه.';
+      const failText = 'فشلت العملية، حاول مرة أخرى';
+
       await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/answerCallbackQuery`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           callback_query_id: callbackQuery.id,
-          text: action === 'approve' ? 'تم قبول الحرفي بنجاح!' : 'تم رفض الحرفي وحذفه.',
+          text: updateRes.ok ? successText : failText,
         }),
       });
 
-      return res.status(200).json({ success: true });
+      if (updateRes.ok) {
+        await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/editMessageReplyMarkup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: callbackQuery.message.chat.id,
+            message_id: callbackQuery.message.message_id,
+            reply_markup: { inline_keyboard: [] },
+          }),
+        });
+      }
+
+      return res.status(200).json({ success: updateRes.ok });
     }
 
     return res.status(400).json({ error: 'Invalid request body' });
