@@ -30,7 +30,7 @@ module.exports = async function handler(req, res) {
       console.log('Edge Function Response Text:', responseText);
 
       // الرد على تليجرام لإنهاء علامة التحميل على الزر
-      const TELEGRAM_TOKEN = '8610113650:AAGk36aIJM3WdlpZSMM2R5HFLg9MrlQ3-MQ';
+      const TELEGRAM_TOKEN = '8922304399:AAE1wmvK8aBS7e20DAmzmj0fUyQ8zBiozMs';
       await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/answerCallbackQuery`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
