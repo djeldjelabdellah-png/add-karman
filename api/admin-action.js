@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // طلب من تليغرام (ضغطة زر)
+// طلب من تليغرام (ضغطة زر)
   if (req.body.callback_query) {
     const cq = req.body.callback_query;
     const sep = cq.data.indexOf('_');
@@ -20,31 +20,7 @@ export default async function handler(req, res) {
       Prefer: 'return=representation'
     };
 
-    // 1. أولاً: إخفاء الأزرار فوراً من تيليجرام لضمان استجابة الواجهة للمستخدم
-    try {
-      await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/answerCallbackQuery`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          callback_query_id: cq.id,
-          text: tgAction === 'approve' ? '✅ تم القبول' : '❌ تم الرفض'
-        })
-      });
-
-      await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/editMessageReplyMarkup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: cq.message.chat.id,
-          message_id: cq.message.message_id,
-          reply_markup: { inline_keyboard: [] }
-        })
-      });
-    } catch (telegramErr) {
-      console.error('TELEGRAM UI ERROR:', telegramErr);
-    }
-
-    // 2. ثانياً: تنفيذ العملية في قاعدة البيانات (Supabase)
+    // 1. تنفيذ العملية في قاعدة البيانات أولاً
     try {
       if (tgAction === 'approve') {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/craftsmen?id=eq.${tgCraftsmanId}`, {
@@ -64,6 +40,34 @@ export default async function handler(req, res) {
       }
     } catch (dbErr) {
       console.error('TELEGRAM DB ERROR:', dbErr);
+    }
+
+    // 2. إخفاء الأزرار وتسجيل الاستجابة في الـ Logs
+    try {
+      const answerRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/answerCallbackQuery`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          callback_query_id: cq.id,
+          text: tgAction === 'approve' ? '✅ تم القبول' : '❌ تم الرفض'
+        })
+      });
+      console.log("TG ANSWER RES:", await answerRes.text());
+
+      const editRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/editMessageReplyMarkup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: cq.message.chat.id,
+          message_id: cq.message.message_id,
+          reply_markup: { inline_keyboard: [] }
+        })
+      });
+      const editTxt = await editRes.text();
+      console.log("TG EDIT REPLY MARKUP RES:", editTxt); // <--- هذا السطر سيوضح لنا سبب عدم الاختفاء
+
+    } catch (telegramErr) {
+      console.error('TELEGRAM UI ERROR:', telegramErr);
     }
 
     return res.status(200).json({ ok: true });
