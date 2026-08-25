@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // طلب من تليغرام (ضغطة زر) — شكل مختلف عن طلبات التطبيق
+  // طلب من تليغرام (ضغطة زر)
   if (req.body.callback_query) {
     const cq = req.body.callback_query;
     const sep = cq.data.indexOf('_');
@@ -34,6 +34,7 @@ export default async function handler(req, res) {
         });
       }
 
+      // إرسال تنبيه في أعلى تيليجرام
       await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/answerCallbackQuery`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -43,6 +44,7 @@ export default async function handler(req, res) {
         })
       });
 
+      // إخفاء الأزرار تماماً بعد الضغط
       await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/editMessageReplyMarkup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -59,6 +61,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true });
   }
 
+  // طلب من التطبيق / لوحة التحكم
   const { token, craftsmanId, action } = req.body;
 
   if (!token || !craftsmanId || !['approve', 'reject'].includes(action)) {
@@ -92,7 +95,6 @@ export default async function handler(req, res) {
 
   try {
     if (action === 'approve') {
-      // ⚠️ تم تصحيح المتغير هنا من tgCraftsmanId إلى craftsmanId الصحيح
       const response = await fetch(
         `${SUPABASE_URL}/rest/v1/craftsmen?id=eq.${craftsmanId}`,
         {
@@ -103,12 +105,11 @@ export default async function handler(req, res) {
       );
 
       console.log("PATCH STATUS:", response.status);
-
       const txt = await response.text();
       console.log("PATCH RESPONSE:", txt);
 
       if (!response.ok) {
-        throw new Error(txt); // تم تصحيح result إلى txt المعرف مسبقاً لمنع حدوث خطأ إضافي
+        throw new Error(txt);
       }
     } else {
       const response = await fetch(
@@ -120,7 +121,6 @@ export default async function handler(req, res) {
       );
 
       const result = await response.text();
-
       console.log('REJECT STATUS:', response.status);
       console.log('REJECT RESPONSE:', result);
 
