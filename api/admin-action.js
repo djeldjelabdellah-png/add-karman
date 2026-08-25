@@ -20,21 +20,8 @@ export default async function handler(req, res) {
       Prefer: 'return=representation'
     };
 
+    // 1. أولاً: إخفاء الأزرار فوراً من تيليجرام لضمان استجابة الواجهة للمستخدم
     try {
-      if (tgAction === 'approve') {
-        await fetch(`${SUPABASE_URL}/rest/v1/craftsmen?id=eq.${tgCraftsmanId}`, {
-          method: 'PATCH',
-          headers: SB_HEADERS,
-          body: JSON.stringify({ status: 'approved' })
-        });
-      } else if (tgAction === 'reject') {
-        await fetch(`${SUPABASE_URL}/rest/v1/craftsmen?id=eq.${tgCraftsmanId}`, {
-          method: 'DELETE',
-          headers: SB_HEADERS
-        });
-      }
-
-      // إرسال تنبيه في أعلى تيليجرام
       await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/answerCallbackQuery`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,7 +31,6 @@ export default async function handler(req, res) {
         })
       });
 
-      // إخفاء الأزرار تماماً بعد الضغط
       await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/editMessageReplyMarkup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -54,8 +40,30 @@ export default async function handler(req, res) {
           reply_markup: { inline_keyboard: [] }
         })
       });
-    } catch (e) {
-      console.error('TELEGRAM CALLBACK ERROR:', e);
+    } catch (telegramErr) {
+      console.error('TELEGRAM UI ERROR:', telegramErr);
+    }
+
+    // 2. ثانياً: تنفيذ العملية في قاعدة البيانات (Supabase)
+    try {
+      if (tgAction === 'approve') {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/craftsmen?id=eq.${tgCraftsmanId}`, {
+          method: 'PATCH',
+          headers: SB_HEADERS,
+          body: JSON.stringify({ status: 'approved' })
+        });
+        const txt = await response.text();
+        console.log("TG APPROVE RESPONSE:", txt);
+      } else if (tgAction === 'reject') {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/craftsmen?id=eq.${tgCraftsmanId}`, {
+          method: 'DELETE',
+          headers: SB_HEADERS
+        });
+        const txt = await response.text();
+        console.log("TG REJECT RESPONSE:", txt);
+      }
+    } catch (dbErr) {
+      console.error('TELEGRAM DB ERROR:', dbErr);
     }
 
     return res.status(200).json({ ok: true });
