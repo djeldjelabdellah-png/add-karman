@@ -92,21 +92,19 @@ export default async function handler(req, res) {
 
   try {
     if (action === 'approve') {
-      const response = await fetch(
-        `${SUPABASE_URL}/rest/v1/craftsmen?id=eq.${craftsmanId}`,
-        {
-          method: 'PATCH',
-          headers: SB_HEADERS,
-          body: JSON.stringify({
-            status: 'approved'
-          })
-        }
-      );
+    const response = await fetch(
+  `${SUPABASE_URL}/rest/v1/craftsmen?id=eq.${tgCraftsmanId}`,
+  {
+    method: 'PATCH',
+    headers: SB_HEADERS,
+    body: JSON.stringify({ status: 'approved' })
+  }
+);
 
-      const result = await response.text();
+console.log("PATCH STATUS:", response.status);
 
-      console.log('APPROVE STATUS:', response.status);
-      console.log('APPROVE RESPONSE:', result);
+const txt = await response.text();
+console.log("PATCH RESPONSE:", txt);
 
       if (!response.ok) {
         throw new Error(result);
